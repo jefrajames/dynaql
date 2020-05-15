@@ -15,9 +15,7 @@
  */
 package org.worldline.dynaql;
 
-import java.util.concurrent.TimeUnit;
 import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import org.junit.jupiter.api.Test;
 
@@ -28,43 +26,33 @@ import org.junit.jupiter.api.Test;
 public class ClientBuilderTest {
 
     @Test
-    public void testEmptyBuilder() {
+    public void testTimeout() {
         ClientBuilder builder = ClientBuilder.newBuilder();
-        assertNotNull(builder);
+        builder.connectTimeout(500);
+        builder.readTimeout(2000);
+        builder.property(Configuration.HTTP_CONNECTION_MANAGER_TIMEOUT, 1500L);
+
+        assertEquals(builder.getConfiguration(Configuration.HTTP_CONNECT_TIMEOUT), 500L);
+        assertEquals(builder.getConfiguration(Configuration.HTTP_READ_TIMEOUT), 2000L);
+        assertEquals(builder.getConfiguration(Configuration.HTTP_CONNECTION_MANAGER_TIMEOUT), 1500L);
     }
 
     @Test
-    public void testTimeout() {
+    public void testProxy() {
         ClientBuilder builder = ClientBuilder.newBuilder();
-        builder.connectTimeout(5, TimeUnit.SECONDS);
-        builder.readTimeout(500, TimeUnit.MILLISECONDS);
 
-        assertEquals(builder.getConnectTimeout().getValue(), 5);
-        assertEquals(builder.getConnectTimeout().getTimeUnit(), TimeUnit.SECONDS);
+        builder.property(Configuration.HTTP_PROXY_NAME, "localhost");
+        builder.property(Configuration.HTTP_PROXY_PORT, 8080);
 
-        assertEquals(builder.getReadTimeout().getValue(), 500);
-        assertEquals(builder.getReadTimeout().getTimeUnit(), TimeUnit.MILLISECONDS);
-
+        assertEquals(builder.getConfiguration(Configuration.HTTP_PROXY_NAME), "localhost");
+        assertEquals(builder.getConfiguration(Configuration.HTTP_PROXY_PORT), 8080);
     }
 
     @Test
     public void testIllegalTimeout() {
         assertThrows(IllegalArgumentException.class, () -> {
-            ClientBuilder.newBuilder().connectTimeout(-1, TimeUnit.MINUTES);
+            ClientBuilder.newBuilder().connectTimeout(-1);
         });
-
-        assertThrows(IllegalArgumentException.class, () -> {
-            ClientBuilder.newBuilder().connectTimeout(10, TimeUnit.DAYS);
-        });
-
-        assertThrows(IllegalArgumentException.class, () -> {
-            ClientBuilder.newBuilder().readTimeout(0, TimeUnit.MINUTES);
-        });
-
-        assertThrows(IllegalArgumentException.class, () -> {
-            ClientBuilder.newBuilder().readTimeout(1, TimeUnit.HOURS);
-        });
-
     }
 
 }

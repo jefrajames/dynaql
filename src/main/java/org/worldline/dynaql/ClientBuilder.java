@@ -15,50 +15,47 @@
  */
 package org.worldline.dynaql;
 
-import java.util.Properties;
-import java.util.concurrent.TimeUnit;
-
 /**
  *
  * @author jefrajames
  */
 public class ClientBuilder {
 
-    private HttpTimeout connectTimeout;
-    private HttpTimeout readTimeout;
-    private final Properties properties = new Properties();
-
+    private final Configuration configuration = new Configuration();
+    
     public static ClientBuilder newBuilder() {
         return new ClientBuilder();
     }
 
-
-    public ClientBuilder connectTimeout(long value, TimeUnit timeUnit) {
-        this.connectTimeout = new HttpTimeout(value, timeUnit);
+    public ClientBuilder connectTimeout(long connectTimeout) {
+        if ( connectTimeout<=0 )
+            throw new IllegalArgumentException("Timeout value should be positive " + connectTimeout);
+        
+        configuration.property(Configuration.HTTP_CONNECT_TIMEOUT, connectTimeout);
         return this;
     }
 
-    public ClientBuilder readTimeout(long value, TimeUnit timeUnit) {
-        this.readTimeout = new HttpTimeout(value, timeUnit);
+    public ClientBuilder readTimeout(long readTimeout) {
+        if ( readTimeout<=0 )
+            throw new IllegalArgumentException("Timeout value should be positive " + readTimeout);
+        
+        configuration.property(Configuration.HTTP_READ_TIMEOUT, readTimeout);
         return this;
     }
 
     // Build a Client
     public Client build() {
-        return new Client(connectTimeout, readTimeout);
+        return new Client(configuration);
     }
 
-    public HttpTimeout getConnectTimeout() {
-        return connectTimeout;
-    }
-
-    public HttpTimeout getReadTimeout() {
-        return readTimeout;
-    }
 
     public ClientBuilder property(String key, Object value) {
-        properties.put(key, value);
+        configuration.property(key, value);
         return this;
     }
+    
+    public Object getConfiguration(String key) {
+        return configuration.get(key);
+    } 
 
 }

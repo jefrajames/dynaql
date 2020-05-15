@@ -17,7 +17,6 @@ package org.worldline.dynaql;
 
 import java.net.URI;
 import java.net.URISyntaxException;
-import java.util.Properties;
 
 /**
  *
@@ -25,14 +24,10 @@ import java.util.Properties;
  */
 public class Client {
 
-    private final HttpTimeout connectTimeout;
-    private final HttpTimeout readTimeout;
-    private final Properties properties;
+    private final Configuration configuration;
     
-    protected Client(HttpTimeout connectTimeout, HttpTimeout readTimeout) {
-        this.connectTimeout = connectTimeout;
-        this.readTimeout = readTimeout;
-        this.properties = new Properties();
+    protected Client(Configuration configuration) {
+        this.configuration = configuration;
     }
 
     // Should be URI and operation
@@ -50,12 +45,16 @@ public class Client {
             throw new IllegalArgumentException("Illegal URI target value: " + uri);
         }
 
-        return new GraphQLTarget(connectTimeout, readTimeout, target);
+        return new GraphQLTarget(configuration, target);
     }
 
-    public void property(String key, Object value) {
-        properties.put(key, value);
+    public Client property(String key, Object value) {
+        configuration.property(key, value);
+        return this;
     }
-
+    
+    public Object getConfiguration(String key) {
+        return configuration.get(key);
+    } 
 
 }

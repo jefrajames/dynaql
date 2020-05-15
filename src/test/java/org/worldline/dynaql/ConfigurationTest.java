@@ -19,7 +19,6 @@ import java.io.IOException;
 import java.net.MalformedURLException;
 import java.util.Properties;
 import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.junit.jupiter.api.Assertions.assertThrows;
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.Test;
 
@@ -27,7 +26,7 @@ import org.junit.jupiter.api.Test;
  *
  * @author jefrajames
  */
-public class ClientTest {
+public class ConfigurationTest {
 
     private static Properties CONFIG = new Properties();
     private static String endpoint;
@@ -38,17 +37,22 @@ public class ClientTest {
         endpoint = CONFIG.getProperty("endpoint");
     }
 
+    
+    
     @Test
-    public void testTReadimeout() {
-        Client client = ClientBuilder.newBuilder().connectTimeout(1000).readTimeout(1).build();
+    public void testTimeoutInvocation() throws IOException {
+        Client client = ClientBuilder.newBuilder().connectTimeout(500).build();
+
+        GraphQLTarget target = client.target(endpoint);
         
-        assertEquals(client.getConfiguration(Configuration.HTTP_CONNECT_TIMEOUT),1000L);
-        assertEquals(client.getConfiguration(Configuration.HTTP_READ_TIMEOUT),1L);
-        
-        assertThrows(RuntimeException.class, () -> {
-            client.target(endpoint).request("GraphQL request here").invoke();
-        });
-       
+        Invocation invocation1 = target.request("GraphQL request here").build();
+        assertEquals(invocation1.getConfiguration(Configuration.HTTP_CONNECT_TIMEOUT), 500L);
+            
+        Invocation invocation2 = target
+                .property(Configuration.HTTP_CONNECT_TIMEOUT, 1000)
+                .request("GraphQL request here")
+                .build();
+        assertEquals(invocation2.getConfiguration(Configuration.HTTP_CONNECT_TIMEOUT), 1000);
     }
 
 }

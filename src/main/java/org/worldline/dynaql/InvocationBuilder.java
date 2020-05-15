@@ -25,16 +25,14 @@ import java.util.Map;
  */
 public class InvocationBuilder {
 
-    private final HttpTimeout connectTimeout;
-    private final HttpTimeout readTimeout;
+    private final Configuration configuration;
     private final URI uri;
     private final String request;
-    private final Map<String, String> variables; // TODO: manage non String variables
+    private final Map<String, Object> variables; // TODO: manage non String variables
     private final Map<String, String> headers;
 
-    public InvocationBuilder(HttpTimeout connectTimeout, HttpTimeout readTimeout, URI uri, String request) {
-        this.connectTimeout = connectTimeout;
-        this.readTimeout = readTimeout;
+    public InvocationBuilder(Configuration configuration, URI uri, String request) {
+        this.configuration = configuration;
         this.uri = uri;
         this.request = request;
         this.variables = new HashMap<>();
@@ -42,7 +40,7 @@ public class InvocationBuilder {
     }
 
     
-    public InvocationBuilder variable(String name, String value) {
+    public InvocationBuilder variable(String name, Object value) {
         variables.put(name, value);
         return this;
     }
@@ -53,13 +51,15 @@ public class InvocationBuilder {
     }
      
      public Invocation build() {
-         return new Invocation(connectTimeout, readTimeout, uri, request, variables, headers);
+         return new Invocation(configuration, uri, request, variables, headers);
      }
      
      public Response invoke() {
-         return new Invocation(connectTimeout, readTimeout, uri, request, variables, headers).invoke();
+         return new Invocation(configuration, uri, request, variables, headers).invoke();
      }
      
+      public Object getConfiguration(String key) {
+        return configuration.get(key);
+    } 
      
-
 }

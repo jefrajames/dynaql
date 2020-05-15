@@ -16,7 +16,6 @@
 package org.worldline.dynaql;
 
 import java.net.URI;
-import java.util.Properties;
 
 /**
  *
@@ -24,26 +23,28 @@ import java.util.Properties;
  */
 public class GraphQLTarget {
 
-    private final HttpTimeout connectTimeout;
-    private final HttpTimeout readTimeout;
+  
     private final URI uri;
-    private final Properties properties;
+    private final Configuration configuration;
+ 
     
-    protected GraphQLTarget(HttpTimeout connectTimeout, HttpTimeout readTimeout, URI uri) {
-        this.connectTimeout = connectTimeout;
-        this.readTimeout = readTimeout;
+    protected GraphQLTarget(Configuration configuration, URI uri) {    
         this.uri = uri;
-        this.properties = new Properties();
+        this.configuration = configuration;
     }
     
     // Generates a GraphQLInvocationBuilder
     public InvocationBuilder request(String request) {
-        return new InvocationBuilder(connectTimeout, readTimeout, uri, request);
+        return new InvocationBuilder(configuration, uri, request);
     }
 
     public GraphQLTarget property(String key, Object value) {
-        properties.put(key, value); // WebTarget instances are mutable with respect to their configuration
+        configuration.property(key, value);
         return this;
     }
+    
+    public Object getConfiguration(String key) {
+        return configuration.get(key);
+    } 
 
 }

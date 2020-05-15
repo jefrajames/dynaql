@@ -18,11 +18,11 @@ package org.worldline.dynaql;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.StringReader;
+import java.math.BigDecimal;
 import java.net.URI;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
-import java.util.Properties;
 import javax.json.Json;
 import javax.json.JsonArray;
 import javax.json.JsonObject;
@@ -32,8 +32,10 @@ import javax.json.bind.Jsonb;
 import javax.json.bind.JsonbBuilder;
 import org.apache.commons.io.IOUtils;
 import org.apache.http.Header;
+import org.apache.http.HttpHost;
 import org.apache.http.client.HttpResponseException;
 import org.apache.http.client.config.RequestConfig;
+import org.apache.http.client.config.RequestConfig.Builder;
 import org.apache.http.client.methods.CloseableHttpResponse;
 import org.apache.http.client.methods.HttpPost;
 import org.apache.http.entity.ContentType;
@@ -48,24 +50,66 @@ import org.slf4j.LoggerFactory;
  */
 public class Invocation {
 
-    private final HttpTimeout connectTimeout;
-    private final HttpTimeout readTimeout;
+    public static final int DEFAULT_HTTP_PROXY_PORT = 3128;
+
+    private final Configuration configuration;
     private final URI uri;
     private final String request;
-    private final Properties properties;
     private final Map<String, String> headers;
-    private final Map<String, String> variables; // TODO: how to manage non String variables?
-    
-    private static org.slf4j.Logger log = LoggerFactory.getLogger(Invocation.class);
+    private final Map<String, Object> variables; // TODO: how to manage non String variables?
 
-    protected Invocation(HttpTimeout connectTimeout, HttpTimeout readTimeout, URI uri, String request, Map<String, String> variables, Map<String, String> headers) {
-        this.connectTimeout = connectTimeout;
-        this.readTimeout = readTimeout;
+    private static final org.slf4j.Logger log = LoggerFactory.getLogger(Invocation.class);
+
+    protected Invocation(Configuration configuration, URI uri, String request, Map<String, Object> variables, Map<String, String> headers) {
+        this.configuration = configuration;
         this.uri = uri;
         this.request = request;
         this.variables = variables;
-        this.properties = new Properties();
         this.headers = headers;
+    }
+
+    private void setProxy(Builder configBuilder) {
+        String hostname = (String) configuration.get(Configuration.HTTP_PROXY_NAME);
+        if (hostname == null) {
+            return; // No proxy configured
+        }
+        log.debug("http.proxy.hostname=" + hostname);
+
+        Integer port = (Integer) configuration.get(Configuration.HTTP_PROXY_PORT);
+        if (port == null || port <= 0) {
+            port = DEFAULT_HTTP_PROXY_PORT;
+        }
+        log.debug("http.proxy.port=" + port);
+
+        configBuilder.setProxy(new HttpHost(hostname, port.intValue()));
+
+        return;
+    }
+
+    private void setTimeout(Builder configBuilder) {
+
+        // Socket connection timeout
+        Long connectTimeout = (Long) configuration.get(Configuration.HTTP_CONNECT_TIMEOUT);
+
+        if (connectTimeout != null) {
+            log.debug("http.connect.timeout=" + connectTimeout);
+            configBuilder.setConnectTimeout(connectTimeout.intValue());
+        }
+
+        // Socket read timeout
+        Long readTimeout = (Long) configuration.get(Configuration.HTTP_READ_TIMEOUT);
+        if (readTimeout != null) {
+            log.debug("http.read.timeout=" + readTimeout);
+            configBuilder.setSocketTimeout(readTimeout.intValue());
+        }
+
+        // Connection pool/manager timeout
+        Long managerTimeout = (Long) configuration.get(Configuration.HTTP_CONNECTION_MANAGER_TIMEOUT);
+        if (managerTimeout != null) {
+            log.debug("http.connection.manager.timeout=" + managerTimeout);
+            configBuilder.setConnectionRequestTimeout(managerTimeout.intValue());
+        }
+
     }
 
     // Classe HttpResponse qui continet header + responseBody
@@ -74,15 +118,21 @@ public class Invocation {
         try (CloseableHttpClient httpClient = HttpClients.createDefault()) {
 
             HttpPost httpPost = new HttpPost(uri);
-            httpPost.setConfig(RequestConfig.DEFAULT);
 
+            // Configure the client
+            Builder configBuilder = RequestConfig.custom();
+            setProxy(configBuilder);
+            setTimeout(configBuilder);
+
+            httpPost.setConfig(configBuilder.build());
+
+            // Set the HTTP headers
             if (headers != null) {
                 for (Map.Entry<String, String> header : headers.entrySet()) {
                     httpPost.addHeader(header.getKey(), header.getValue());
                 }
             }
 
-            // TODO: set the HTTP headers here
             httpPost.setEntity(stringEntity);
 
             try (CloseableHttpResponse httpResponse = httpClient.execute(httpPost)) {
@@ -110,16 +160,22 @@ public class Invocation {
 
     private JsonObject formatJsonVariables() {
         JsonObjectBuilder varBuilder = Json.createObjectBuilder();
-
+  
         variables.forEach((k, v) -> {
-            varBuilder.add(k, v);
+            if (v instanceof String)
+                varBuilder.add(k, (String) v);
+            else if ( v instanceof Integer )
+                varBuilder.add(k, (Integer) v);
         });
 
         return varBuilder.build();
     }
 
     private String formatJsonQuery(String request) {
-        return Json.createObjectBuilder().add("query", request).add("variables", formatJsonVariables()).build().toString();
+        JsonObjectBuilder queryBuilder = Json.createObjectBuilder().add("query", request);
+        if ( !variables.isEmpty() )
+            queryBuilder.add("variables", formatJsonVariables());
+        return queryBuilder.build().toString();
     }
 
     public Response invoke() {
@@ -165,6 +221,10 @@ public class Invocation {
         }
 
         return graphQLResponse;
+    }
+
+    public Object getConfiguration(String key) {
+        return configuration.get(key);
     }
 
 }

@@ -29,7 +29,7 @@
      
     <dependencies>
      
-        <!-- API dependencies -->
+        <!-- Core API dependencies -->
         <dependency>
             <groupId>jakarta.json</groupId>
             <artifactId>jakarta.json-api</artifactId>
@@ -41,7 +41,12 @@
             <version>1.0.2</version>
         </dependency>
         
-        <!-- HTTP transport depedency -->
+        <!-- Implementation specific dependencies -->
+        <dependency>
+            <groupId>jakarta.enterprise</groupId>
+            <artifactId>jakarta.enterprise.cdi-api</artifactId>
+            <version>2.0.2</version>
+        </dependency>
         <dependency>
             <groupId>org.apache.httpcomponents</groupId>
             <artifactId>httpclient</artifactId>
@@ -52,8 +57,6 @@
             <artifactId>commons-io</artifactId>
             <version>2.6</version>
         </dependency>
-        
-        <!-- JAX-RS transport dependency -->
         <dependency>
             <groupId>javax.ws.rs</groupId>
             <artifactId>javax.ws.rs-api</artifactId>
@@ -67,7 +70,7 @@
             <version>1.7.30</version>
         </dependency>
         
-        <!-- TEST dependencies (using Quarkus) -->
+        <!-- TEST dependencies (using QuarkusTest) -->
         <dependency>
             <groupId>io.quarkus</groupId>
             <artifactId>quarkus-resteasy</artifactId>
@@ -94,28 +97,10 @@
             <scope>test</scope>
         </dependency>
         <dependency>
-            <groupId>org.seleniumhq.selenium</groupId>
-            <artifactId>selenium-java</artifactId>
-            <scope>test</scope>
-            <version>2.44.0</version>
-        </dependency>
-        <dependency>
-            <groupId>com.opera</groupId>
-            <artifactId>operadriver</artifactId>
-            <scope>test</scope>
-            <version>1.5</version>
-            <exclusions>
-                <exclusion>
-                    <groupId>org.seleniumhq.selenium</groupId>
-                    <artifactId>selenium-remote-driver</artifactId>
-                </exclusion>
-            </exclusions>
-        </dependency>
-        <dependency>
             <groupId>junit</groupId>
             <artifactId>junit</artifactId>
+            <version>4.12</version>
             <scope>test</scope>
-            <version>4.11</version>
         </dependency>
     </dependencies>
     

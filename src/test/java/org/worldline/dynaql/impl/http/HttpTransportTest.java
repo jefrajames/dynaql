@@ -15,11 +15,6 @@
  */
 package org.worldline.dynaql.impl.http;
 
-import org.worldline.dynaql.impl.http.HttpInvocationBuilder;
-import org.worldline.dynaql.impl.http.HttpInvocation;
-import org.worldline.dynaql.impl.http.HttpResponse;
-import org.worldline.dynaql.impl.http.HttpInvocationException;
-import org.worldline.dynaql.impl.http.HttpConfiguration;
 import java.io.IOException;
 import java.net.MalformedURLException;
 import java.time.LocalDate;
@@ -33,9 +28,10 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.Test;
 import org.slf4j.LoggerFactory;
-import org.worldline.dynaql.impl.DynaQLResponse;
 import org.worldline.dynaql.api.GraphQLClientBuilder;
 import org.worldline.dynaql.api.GraphQLRequest;
+import org.worldline.dynaql.api.GraphQLResponse;
+import org.worldline.dynaql.impl.DynaQLResponse;
 import org.worldline.dynaql.impl.entity.Person;
 
 /**
@@ -53,7 +49,7 @@ public class HttpTransportTest {
     public static void beforeClass() throws MalformedURLException, IOException {
         CONFIG.load(HttpTransportTest.class.getClassLoader().getResourceAsStream("graphql-config.properties"));
         endpoint = CONFIG.getProperty("endpoint");
-        graphQLClientBuilder=ServiceLoader.load(GraphQLClientBuilder.class).findFirst().get();
+        graphQLClientBuilder = ServiceLoader.load(GraphQLClientBuilder.class).findFirst().get();
     }
 
     @Test
@@ -69,7 +65,7 @@ public class HttpTransportTest {
 
         HttpResponse httpResponse = invocation.invoke();
 
-        DynaQLResponse graphQLResponse = httpResponse.getGraphQLResponse();
+        GraphQLResponse graphQLResponse = httpResponse.getGraphQLResponse();
 
         assertTrue(graphQLResponse.hasData());
         assertFalse(graphQLResponse.hasError());
@@ -91,7 +87,7 @@ public class HttpTransportTest {
 
         HttpResponse httpResponse = invocation.invoke();
 
-        DynaQLResponse graphQLResponse = httpResponse.getGraphQLResponse();
+        GraphQLResponse graphQLResponse = httpResponse.getGraphQLResponse();
 
         assertFalse(graphQLResponse.hasData());
         assertTrue(graphQLResponse.hasError());
@@ -115,7 +111,7 @@ public class HttpTransportTest {
 
         HttpResponse httpResponse = invocation.invoke();
 
-        DynaQLResponse graphQLResponse = httpResponse.getGraphQLResponse();
+        GraphQLResponse graphQLResponse = httpResponse.getGraphQLResponse();
         assertTrue(graphQLResponse.hasData());
         assertFalse(graphQLResponse.hasError());
     }
@@ -134,7 +130,7 @@ public class HttpTransportTest {
 
         HttpResponse httpResponse = invocation.invoke();
 
-        DynaQLResponse graphQLResponse = httpResponse.getGraphQLResponse();
+        GraphQLResponse graphQLResponse = httpResponse.getGraphQLResponse();
 
         assertFalse(graphQLResponse.hasError());
         assertTrue(graphQLResponse.hasData());
@@ -160,7 +156,7 @@ public class HttpTransportTest {
 
         HttpResponse httpResponse = invocation.invoke();
 
-        DynaQLResponse graphQLResponse = httpResponse.getGraphQLResponse();
+        GraphQLResponse graphQLResponse = httpResponse.getGraphQLResponse();
         assertFalse(graphQLResponse.hasError());
         assertTrue(graphQLResponse.hasData());
 
@@ -176,10 +172,11 @@ public class HttpTransportTest {
     public void testCreatePerson() {
         assertTrue(1 == 1);
 
-        GraphQLRequest graphQLRequest = graphQLClientBuilder.newRequest(CONFIG.getProperty("createPersonWithVariables"));
-        graphQLRequest.addVariable("surname", "James");
-        graphQLRequest.addVariable("names", "JF");
-        graphQLRequest.addVariable("birthDate", "27/04/1962");
+        GraphQLRequest graphQLRequest = graphQLClientBuilder
+                .newRequest(CONFIG.getProperty("createPersonWithVariables"))
+                .addVariable("surname", "James")
+                .addVariable("names", "JF")
+                .addVariable("birthDate", "27/04/1962");
 
         HttpInvocation invocation = HttpInvocationBuilder
                 .newBuilder()
@@ -188,7 +185,7 @@ public class HttpTransportTest {
                 .build();
 
         HttpResponse httpResponse = invocation.invoke();
-        DynaQLResponse graphQLResponse = httpResponse.getGraphQLResponse();
+        GraphQLResponse graphQLResponse = httpResponse.getGraphQLResponse();
 
         assertFalse(graphQLResponse.hasError());
         assertTrue(graphQLResponse.hasData());
@@ -245,7 +242,7 @@ public class HttpTransportTest {
 
         HttpResponse httpResponse = invocation.invoke();
 
-        DynaQLResponse graphQLResponse = httpResponse.getGraphQLResponse();
+        GraphQLResponse graphQLResponse = httpResponse.getGraphQLResponse();
 
         assertTrue(graphQLResponse.hasData());
         assertFalse(graphQLResponse.hasError());
@@ -272,7 +269,7 @@ public class HttpTransportTest {
 
         HttpResponse httpResponse = invocation.invoke();
 
-        DynaQLResponse graphQLResponse = httpResponse.getGraphQLResponse();
+        GraphQLResponse graphQLResponse = httpResponse.getGraphQLResponse();
         assertTrue(graphQLResponse.hasData());
         assertFalse(graphQLResponse.hasError());
 

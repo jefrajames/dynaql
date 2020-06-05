@@ -35,6 +35,7 @@ import javax.ws.rs.core.MultivaluedMap;
 import javax.ws.rs.ext.MessageBodyReader;
 import javax.ws.rs.ext.Provider;
 import org.slf4j.LoggerFactory;
+import org.worldline.dynaql.api.GraphQLResponse;
 import org.worldline.dynaql.impl.DynaQLResponse;
 import org.worldline.dynaql.impl.DynaQLResponse.DynaQLError;
 import org.worldline.dynaql.api.GraphQLResponse.GraphQLError;
@@ -47,7 +48,7 @@ import org.worldline.dynaql.api.GraphQLResponse.GraphQLError;
  */
 @Provider
 @Consumes("application/json")
-public class GraphQLResponseReader implements MessageBodyReader<DynaQLResponse> {
+public class GraphQLResponseReader implements MessageBodyReader<GraphQLResponse> {
 
     private static final int MAX_LOG_LENGTH = 128;
 
@@ -55,11 +56,11 @@ public class GraphQLResponseReader implements MessageBodyReader<DynaQLResponse> 
 
     @Override
     public boolean isReadable(Class<?> type, Type genericType, Annotation[] annotations, MediaType mediaType) {
-        return type == DynaQLResponse.class;
+        return type == GraphQLResponse.class;
     }
 
     @Override
-    public DynaQLResponse readFrom(Class<DynaQLResponse> type, Type genericType, Annotation[] annotations,
+    public DynaQLResponse readFrom(Class<GraphQLResponse> type, Type genericType, Annotation[] annotations,
             MediaType mediaType, MultivaluedMap<String, String> httpHeaders,
             InputStream entityStream) throws IOException, WebApplicationException {
 

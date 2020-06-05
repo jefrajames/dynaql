@@ -15,8 +15,6 @@
  */
 package org.worldline.dynaql.impl.jaxrs;
 
-import org.worldline.dynaql.impl.jaxrs.GraphQLRequestWriter;
-import org.worldline.dynaql.impl.jaxrs.GraphQLResponseReader;
 import org.worldline.dynaql.impl.entity.Profile;
 import org.worldline.dynaql.impl.entity.Person;
 import io.quarkus.test.junit.QuarkusTest;
@@ -28,6 +26,7 @@ import java.util.Properties;
 import java.util.ServiceLoader;
 import java.util.concurrent.CompletionStage;
 import java.util.concurrent.TimeUnit;
+import javax.inject.Inject;
 import javax.json.JsonObject;
 import javax.ws.rs.ProcessingException;
 import javax.ws.rs.client.Client;
@@ -43,7 +42,6 @@ import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.Test;
-import org.worldline.dynaql.impl.DynaQLResponse;
 import org.worldline.dynaql.api.GraphQLRequest;
 import org.worldline.dynaql.api.GraphQLResponse;
 import org.worldline.dynaql.api.GraphQLClientBuilder;
@@ -58,11 +56,13 @@ public class JaxrsTransportTest {
     private static final Properties CONFIG = new Properties();
     private static String endpoint;
     private static ClientBuilder clientBuilder;
-    private static GraphQLClientBuilder graphQLClientBuilder;
+    
+    @Inject
+    GraphQLClientBuilder graphQLClientBuilder;
 
     @BeforeAll
     public static void beforeClass() throws MalformedURLException, IOException {
-                   
+
         CONFIG.load(JaxrsTransportTest.class.getClassLoader().getResourceAsStream("graphql-config.properties"));
         endpoint = CONFIG.getProperty("endpoint");
 
@@ -72,8 +72,7 @@ public class JaxrsTransportTest {
                 .register(GraphQLRequestWriter.class)
                 .connectTimeout(5, TimeUnit.SECONDS)
                 .readTimeout(2, TimeUnit.SECONDS);
-        
-        graphQLClientBuilder=ServiceLoader.load(GraphQLClientBuilder.class).findFirst().get();
+
     }
 
     @Test
@@ -89,7 +88,7 @@ public class JaxrsTransportTest {
 
         assertEquals(response.getStatus(), 200);
 
-        GraphQLResponse graphQLResponse = response.readEntity(DynaQLResponse.class);
+        GraphQLResponse graphQLResponse = response.readEntity(GraphQLResponse.class);
         assertTrue(graphQLResponse.hasData());
         assertFalse(graphQLResponse.hasError());
 
@@ -101,7 +100,7 @@ public class JaxrsTransportTest {
 
     @Test
     public void testGraphQLErrors() throws IOException {
-        
+
         GraphQLRequest graphQLRequest = graphQLClientBuilder.newRequest(CONFIG.getProperty("allPeopleWithErrors"));
 
         Client client = clientBuilder.build();
@@ -114,7 +113,7 @@ public class JaxrsTransportTest {
 
         assertEquals(response.getStatus(), 200);
 
-        DynaQLResponse graphQLResponse = response.readEntity(DynaQLResponse.class);
+        GraphQLResponse graphQLResponse = response.readEntity(GraphQLResponse.class);
 
         assertFalse(graphQLResponse.hasData());
         assertTrue(graphQLResponse.hasError());
@@ -139,7 +138,7 @@ public class JaxrsTransportTest {
 
         assertEquals(response.getStatus(), 200);
 
-        DynaQLResponse graphQLResponse = response.readEntity(DynaQLResponse.class);
+        GraphQLResponse graphQLResponse = response.readEntity(GraphQLResponse.class);
 
         assertTrue(graphQLResponse.hasData());
         assertFalse(graphQLResponse.hasError());
@@ -148,16 +147,17 @@ public class JaxrsTransportTest {
     @Test
     public void testStringVariable() {
 
-        GraphQLRequest graphQLRequest = graphQLClientBuilder.newRequest(CONFIG.getProperty("queryWithStringVariable"));
-        graphQLRequest.addVariable("surname", "Senger");
+        GraphQLRequest graphQLRequest = graphQLClientBuilder
+                .newRequest(CONFIG.getProperty("queryWithStringVariable"))
+                .addVariable("surname", "Senger");
 
         Client client = clientBuilder.build();
 
         // Here, we directly get a GraphQLResponse typed entity
-        DynaQLResponse graphQLResponse = client
+        GraphQLResponse graphQLResponse = client
                 .target(endpoint)
                 .request(MediaType.APPLICATION_JSON)
-                .post(json(graphQLRequest), DynaQLResponse.class);
+                .post(json(graphQLRequest), GraphQLResponse.class);
 
         assertFalse(graphQLResponse.hasError());
         assertTrue(graphQLResponse.hasData());
@@ -170,8 +170,9 @@ public class JaxrsTransportTest {
     @Test
     public void testIntVariable() {
 
-        GraphQLRequest graphQLRequest = graphQLClientBuilder.newRequest(CONFIG.getProperty("queryWithIntVariable"));
-        graphQLRequest.addVariable("personId", 1);
+        GraphQLRequest graphQLRequest = graphQLClientBuilder
+                .newRequest(CONFIG.getProperty("queryWithIntVariable"))
+                .addVariable("personId", 1);
 
         Client client = clientBuilder.build();
 
@@ -182,8 +183,8 @@ public class JaxrsTransportTest {
 
         assertEquals(response.getStatus(), 200);
 
-        DynaQLResponse graphQLResponse = response
-                .readEntity(DynaQLResponse.class);
+        GraphQLResponse graphQLResponse = response
+                .readEntity(GraphQLResponse.class);
 
         assertFalse(graphQLResponse.hasError());
         assertTrue(graphQLResponse.hasData());
@@ -202,15 +203,15 @@ public class JaxrsTransportTest {
 
         client.close();
     }
-    
+
     @Test
     public void testCreatePerson() {
-        
+
         GraphQLRequest graphQLRequest = graphQLClientBuilder.newRequest(CONFIG.getProperty("createPersonWithVariables"));
         graphQLRequest.addVariable("surname", "James");
         graphQLRequest.addVariable("names", "JF");
         graphQLRequest.addVariable("birthDate", "27/04/1962");
-        
+
         Client client = clientBuilder.build();
 
         Response response = client
@@ -220,16 +221,16 @@ public class JaxrsTransportTest {
 
         assertEquals(response.getStatus(), 200);
 
-        DynaQLResponse graphQLResponse = response
-                .readEntity(DynaQLResponse.class);
+        GraphQLResponse graphQLResponse = response
+                .readEntity(GraphQLResponse.class);
         assertFalse(graphQLResponse.hasError());
         assertTrue(graphQLResponse.hasData());
-        
+
         Person jfj = graphQLResponse.getObject(Person.class, "updatePerson");
         assertEquals(jfj.getSurname(), "James");
-        assertEquals(jfj.getNames()[0],"JF");
+        assertEquals(jfj.getNames()[0], "JF");
         assertEquals(jfj.getBirthDate(), LocalDate.of(1962, 4, 27));
-        
+
     }
 
     // No Proxy test here: not JAX-RS standard!
@@ -248,7 +249,7 @@ public class JaxrsTransportTest {
                 .request()
                 .post(json(graphQLRequest));
 
-        DynaQLResponse graphQLResponse = response.readEntity(DynaQLResponse.class);
+        GraphQLResponse graphQLResponse = response.readEntity(GraphQLResponse.class);
 
         assertTrue(graphQLResponse.hasData());
         assertFalse(graphQLResponse.hasError());
@@ -296,11 +297,11 @@ public class JaxrsTransportTest {
 
         Client client = clientBuilder.build();
 
-        CompletionStage<DynaQLResponse> csr = client
+        CompletionStage<GraphQLResponse> csr = client
                 .target(endpoint)
                 .request()
                 .rx()
-                .post(json(graphQLRequest.toJson()), DynaQLResponse.class);
+                .post(json(graphQLRequest.toJson()), GraphQLResponse.class);
 
         Thread.sleep(2000);
 

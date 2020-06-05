@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.worldline.dynaql;
+package org.worldline.dynaql.impl.entity;
 
 import java.time.LocalDate;
 import java.util.List;
@@ -23,7 +23,7 @@ import javax.json.bind.annotation.JsonbDateFormat;
  *
  * @author jefrajames
  */
-public class PersonDTO {
+public class Person {
 
     int id;
     String surname;
